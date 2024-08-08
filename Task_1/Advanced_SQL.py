@@ -1,75 +1,75 @@
-"""
-The database loan.db consists of 3 tables: 
-   1. customers - table containing customer data
-   2. loans - table containing loan data pertaining to customers
-   3. credit - table containing credit and creditscore data pertaining to customers
-   4. repayments - table containing loan repayment data pertaining to customers
-   5. months - table containing month name and month ID data
-    
-You are required to make use of your knowledge in SQL to query the database object (saved as loan.db) and return the requested information.
-Simply fill in the vacant space wrapped in triple quotes per question (each function represents a question)
-
-"""
+#Title: Advanced SQL Questions
+#Updated By: Lizl van Jaarsveld
 
 
 def question_1():    
-    
-    #Make use of a JOIN to find out the `AverageIncome` per `CustomerClass`
+    #ABOUT THIS QUERY
+    #This query will return the average income per 'CustomerClass' from the customers and credit datasets.
+    #It will make use of the JOIN function on the customers and credit datasets to return the 'CustomerClass' and created 'AverageIncome' columns.
 
-    qry = """____________________"""
+    qry = """SELECT ROUND(SUM(c.Income)/COUNT(*), 2) as AverageIncome, cr.CustomerClass, 
+    FROM customers c JOIN credit cr ON c.CustomerID = cr.CustomerID GROUP BY cr.CustomerClass"""
     
     return qry
-
-
-
-
-
-
 
 
 def question_2():    
+    #ABOUT THIS QUERY
+    #This query will return a breakdown for the number of rejected applications per province.
+    #It makes use of a JOIN on the customers and loans datasets and will return the 'RejectedApplications' and 'Province' columns.
     
-    #Q2: Make use of a JOIN to return a breakdown of the number of 'RejectedApplications' per 'Province'. 
-
-    qry = """____________________"""
+    qry = """SELECT SUM(case when l.ApprovalStatus = 'Rejected' then 1 else 0 end) as RejectedApplications, 
+    CASE
+        WHEN c.Region = 'EC' or c.Region ='EasternCape' then 'Eastern Cape'
+        WHEN c.Region = 'WC' or c.Region ='WesternCape' then 'Western Cape'
+        WHEN c.Region = 'NC' or c.Region ='NorthernCape' then 'Northern Cape'
+        WHEN c.Region = 'FS' or c.Region ='FreeState' then 'Free State'
+        WHEN c.Region = 'NW' or c.Region ='NorthWest' then 'North West'
+        WHEN c.Region = 'GT' or c.Region ='Gauteng' then 'Gauteng'
+        WHEN c.Region = 'NL' or c.Region ='Natal' then 'Kwazulu Natal'
+        WHEN c.Region = 'MP' or c.Region ='Mpumalanga' then 'Mpumalanga'
+        WHEN c.Region = 'LP' or c.Region ='Limpopo' then 'Limpopo'
+        END AS Province
+    FROM customers c JOIN loans l ON c.CustomerID = l.CustomerID GROUP BY Province """
 
     return qry
-
-
-
-
 
 
 def question_3():    
-    
-    # Making use of the `INSERT` function, create a new table called `financing` which will include the following columns:
-        # `CustomerID`,`Income`,`LoanAmount`,`LoanTerm`,`InterestRate`,`ApprovalStatus` and `CreditScore`
-    # Do not return the new table
+    #ABOUT THIS QUERY
+    #This query will create a new table called 'financing'.
+    #It will include all the columns from the loans dataset and the columns 'Income' from customers and 'CreditScore' from credit.
 
-    qry = """____________________"""
+    qry = """CREATE TABLE financing AS
+    SELECT l.*, c.Income, cr.CreditScore
+    FROM customers c
+    JOIN loans l ON c.CustomerID = l.CustomerID
+    JOIN credit cr ON c.CustomerID = cr.CustomerID"""
 
     return qry
 
-
-
-
-
-# Question 4 and 5 are linked
 
 def question_4():
+    #ABOUT THIS QUERY
+    #This query will create a new table called timeline that sumarizes repayments per customer per month.
+    #It will use the CROSS JOIN function to join the repayments data set with the months dataset.
+    #The table created will only contain repayments made between 6am and 6pm GMT time.
+    #It will have the columns 'CustomerID', 'MonthName', 'AmountTotal' and 'NumberOfRepayments'.
 
-    # Using a `CROSS JOIN` and the `months` table, create a new table called `timeline` that sumarizes Repayments per customer per month.
-    # Columns should be: `CustomerID`, `MonthName`, `NumberOfRepayments`, `AmountTotal`.
-    # Repayments should only occur between 6am and 6pm London Time.
-    # Hint: there should be 12x CustomerID = 1.
-    # Null values to be filled with 0.
-
-    qry = """____________________"""
-
+    qry = """CREATE TABLE timeline AS
+    SELECT CustomerID, MonthName, SUM(Amount) as  AmountTotal, COUNT(CASE WHEN Amount > 0 THEN 1 END) as NumberOfRepayments
+    FROM (SELECT r.CustomerID, m.MonthName,
+        CASE
+        WHEN MONTH(r.RepaymentDate) != m.MonthID THEN 0
+        WHEN MONTH(r.RepaymentDate) == m.MonthID THEN r.AMOUNT
+        END AS Amount 
+    FROM repayments r CROSS JOIN months m 
+    WHERE (HOUR(r.RepaymentDate) BETWEEN 6 AND 18) AND r.TimeZone = 'GMT') 
+    GROUP BY CustomerID, MonthName
+    ORDER BY CustomerID
+    """
     return qry
-
-
-
+    
 
 def question_5():
 
@@ -81,9 +81,6 @@ def question_5():
     qry = """____________________"""
 
     return qry
-
-
-
 
 
 #QUESTION 6 and 7 are linked
